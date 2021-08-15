@@ -1,0 +1,74 @@
+<html>
+
+<head>
+  <link rel="stylesheet" type="text/css" href="./css/style.css" />
+</head>
+
+<title>Zoom Electron Demo</title>
+
+<body>
+  <div class="center">
+    <div>
+      <img class="logo" src="./images/fte_Logo.png" />
+    </div>
+    <br /><br />
+    <div>
+      <input type="text" name="username" placeholder="input user name" id="username" />
+    </div>
+    <br />
+    <div>
+      <input type="password" name="psw" placeholder="input password" id="psw" />
+    </div>
+    <br />
+    <div>
+      <button type="button" onclick="dologin()">Login With Email</button>
+    </div>
+    <br />
+    <div>
+      <input type="text" name="prefixOfVanityUrl" placeholder="input prefix of vanity url" id="prefixOfVanityUrl" />
+    </div>
+    <br />
+    <div>
+      <input type="text" name="uriProtocol" placeholder="input uri protocol" id="uriProtocol" />
+    </div>
+    <br />
+    <div>
+      <button type="button" onclick="generateSSOLoginWebURL()">Generate SSO Login Web URL</button>
+      <button type="button" class="button-disabled" disabled id="sSOLoginWithWebUriProtocolBtn"
+        onclick="sSOLoginWithWebUriProtocol()">SSO Login With Web Uri Protocol</button>
+      <button type="button" onclick="switchtoJoinstart()">Join Without Login</button>
+    </div>
+  </div>
+</body>
+
+</html>
+
+<script>
+  const { ipcRenderer } = require('electron');
+  let sSOLoginWithWebUriProtocolBtn = document.querySelector('#sSOLoginWithWebUriProtocolBtn');
+
+  function dologin() {
+    let username = document.getElementById("username").value;
+    let psw = document.getElementById("psw").value;
+    ipcRenderer.send('asynchronous-message', 'login', username, psw);
+  }
+
+  function generateSSOLoginWebURL() {
+    let prefixOfVanityUrl = document.getElementById("prefixOfVanityUrl").value;
+    ipcRenderer.send('asynchronous-message', 'generateSSOLoginWebURL', prefixOfVanityUrl);
+  }
+
+  function sSOLoginWithWebUriProtocol() {
+    let uriProtocol = document.getElementById("uriProtocol").value;
+    ipcRenderer.send('asynchronous-message', 'sSOLoginWithWebUriProtocol', uriProtocol);
+  }
+
+  function switchtoJoinstart() {
+    ipcRenderer.send('asynchronous-message', 'showSatrtJoinUnLoginWindow');
+  }
+
+  ipcRenderer.on('main-process-generateSSOLoginWebURL', (event, arg) => {
+    sSOLoginWithWebUriProtocolBtn.classList.remove("button-disabled");
+    sSOLoginWithWebUriProtocolBtn.disabled = false;
+  });
+</script>

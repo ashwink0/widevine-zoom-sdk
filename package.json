@@ -1,0 +1,13 @@
+{
+  "name": "zoom-electron-sdk",
+  "version": "5.7.1",
+  "scripts": {
+    "install": "echo zoom electron sdk"
+  },
+  "dependencies": {
+    "google-protobuf": "3.4.0"
+  },
+  "devDependencies": {
+    "electron": "github:castlabs/electron-releases#v13.0.0-wvvmp"
+  }
+}

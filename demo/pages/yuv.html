@@ -1,0 +1,212 @@
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="./css/style.css" />
+  <script src="./js/CanvasRender.js"></script>
+  <script src="./js/Util.js"></script>
+</head>
+<title>Zoom Electron Demo</title>
+<body>
+  <div class="center">
+    <img class="logo" src="./images/fte_Logo.png" />
+  </div>
+  <br>
+  <div class="main-content">
+    <div class="user-content left">
+      <div>
+        <div class="section">User List</div>
+        <ul id="inMeetingUserList"></ul>
+      </div>
+      <div>
+        <div>
+          <div class="section">Video</div>
+          <div class="handle-section">
+            <input name="selectedSubscribeVideoUserIdBoard" placeholder="userid" class="input-width input-disabled" disabled
+              id="selectedSubscribeVideoUserIdBoard" />
+            <select id="selectedVideoRawDataResolutioneOption">
+              <option value="0" selected>90P</option>
+              <option value="1">180P</option>
+              <option value="2">360P</option>
+              <option value="3">720P</option>
+            </select>
+            <select id="selectedSubscribeVideoReceverHandleOption">
+              <option value="0">recever_handle_0</option>
+              <option value="1">recever_handle_1</option>
+              <option value="2">recever_handle_2</option>
+              <option value="3" selected>recever_handle_3</option>
+            </select>
+            <button type="button" class="button-small button-disabled" onclick="handleSubscribeVideo(event)" disabled
+              id="subscribeVideoBtn">Subscribe Video</button>
+          </div>
+          <div class="handle-section">
+            <input name="selectedUnSubscribeVideoUserIdBoard" placeholder="userid" class="input-width input-disabled"
+              disabled id="selectedUnSubscribeVideoUserIdBoard" />
+            <select id="selectedUnSubscribeVideoReceverHandleOption">
+              <option value="0" selected>recever_handle_0</option>
+              <option value="1">recever_handle_1</option>
+              <option value="2">recever_handle_2</option>
+              <option value="3">recever_handle_3</option>
+            </select>
+            <button type="button" class="button-small button-disabled" onclick="handleUnSubscribeVideo()" disabled
+              id="unSubscribeVideoBtn">UnSubscribe Video</button>
+          </div>
+        </div>
+        <div>
+          <div class="section">Share</div>
+          <ul id='sharingUserList' style="display: none">
+          </ul>
+          <div class="handle-section">
+            <input name="selectedSubscribeShareUserIdBoard" placeholder="userid" class="input-width input-disabled" disabled
+              id="selectedSubscribeShareUserIdBoard" />
+            <select id="selectedShareRawDataResolutionOption">
+              <option value="0" selected>90P</option>
+              <option value="1">180P</option>
+              <option value="2">360P</option>
+              <option value="3">720P</option>
+            </select>
+            <button type="button" class="button-small button-disabled" onclick="handleSubscribeShare(event)" disabled
+              id="subscribeShareBtn">Subscribe Share</button>
+          </div>
+          <div class="handle-section">
+            <input name="selectedUnSubscribeShareUserIdBoard" placeholder="userid" class="input-width input-disabled"
+              disabled id="selectedUnSubscribeShareUserIdBoard" />
+            <button type="button" class="button-small button-disabled" onclick="handleUnSubscribeShare()" disabled
+              id="unSubscribeShareBtn">UnSubscribe Share</button>
+          </div>
+        </div>
+        <div>
+          <div class="section">Audio</div>
+          <div class="handle-section">
+            <button type="button" class="button-small" onclick="handleSubscribeAudio()" id="subscribeAudioBtn">Subscribe
+              Audio</button>
+          </div>
+          <div class="handle-section">
+            <button type="button" class="button-small button-disabled" disabled onclick="handleUnsubscribeAudio()"
+              id="unSubscribeAudioBtn">UnSubscribe Audio</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="yuv-content">
+      <div>
+        <div class="section">Share Render</div>
+        <canvas width="605" height="341" id="canvasShare"></canvas>
+      </div>
+      <div class="section">Video Render</div>
+      <div class="width-630" id="canvasVideo">
+        <div class="canvas">
+          <canvas width="300" height="168.75"></canvas>
+          <div></div>
+        </div>
+        <div class="canvas">
+          <canvas width="300" height="168.75"></canvas>
+          <div></div>
+        </div>
+        <div class="canvas">
+          <canvas width="300" height="168.75"></canvas>
+          <div></div>
+        </div>
+        <div class="canvas">
+          <canvas width="300" height="168.75"></canvas>
+          <div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+<script>
+  const { ipcRenderer, remote } = require('electron');
+  const { zoomparticipantsctrl, zoomrawdata, zoomvideo, zoomshare } = remote.app
+  const { SDKRawDataError, ZoomSDKRawDataType, ZNShareStatus, RawDataStatus } = require('../../lib/settings.js');
+
+  const os = require('os');
+  const platform = os.platform();
+  const arch = os.arch();
+
+  const path = platform == 'darwin' ? '../../sdk/mac/' : arch == 'x64' ? '../../sdk/win64/' : '../../sdk/win32/';
+  const sdkPath = path || './bin/';
+  const zoomnodepath = sdkPath + 'zoomsdk_render.node';
+  const libuvAddon = require(zoomnodepath).exports();
+
+  let croppingParams = {
+    top: 0,
+    left: 0,
+    width: 1280,
+    height: 720
+  }
+  let rawDataStatusList = []
+
+  for (let i = 0; i <= 4; i++) {
+    let obj = {
+      recv_handle: i
+    }
+    zoomrawdata.CreateRenderer(obj);
+  }
+
+  window.onbeforeunload = function (e) {
+    for (let i = 0; i <= 4; i++) {
+      let obj = {
+        recv_handle: i
+      }
+      zoomrawdata.DestroyRenderer(obj);
+    }
+  }
+
+  function onRawDataStatusChanged(status, recv_handle) {
+    console.log('onRawDataStatusChanged', status, recv_handle)
+    rawDataStatusList[recv_handle] = status
+    if (status == RawDataStatus.RawData_Off) {
+      if (recv_handle == shareRecvHandle) {
+        shareRender.clear();
+      } else {
+        videoRenderList[recv_handle].clear();
+      }
+    }
+  }
+
+  let ret = zoomrawdata.SetonRawDataStatusChangedCB(onRawDataStatusChanged);
+  console.log('SetonRawDataStatusChangedCB', ret)
+
+  ipcRenderer.on('main-process-stopclient', (event, arg) => {
+    StopVideoClient();
+    StopShareClient();
+    StopAudioClient();
+  })
+
+  ipcRenderer.on('main-process-meetingstatus', (event, arg) => {
+    let data = arg;
+    console.log("=============== meeting status", data, "===============");
+    if (data == 'connecting') {
+      subscribeVideoBtn.disabled()
+      unSubscribeVideoBtn.disabled()
+      subscribeShareBtn.disabled()
+      unSubscribeShareBtn.disabled()
+      subscribeAudioBtn.disabled();
+      unSubscribeAudioBtn.disabled()
+    } else if (data == 'inmeeting') {
+      subscribeAudioBtn.enabled()
+      unSubscribeAudioBtn.disabled()
+      getParticipantsList();
+      let obj = {
+        recv_handle: selectedSubscribeVideoReceverHandleOption.value
+      }
+      let ret = zoomrawdata.UnSubscribe(obj);
+      console.log('unsubscribeVideo', ret, obj);
+      selectedSubscribeVideoReceverHandleOption.value = '0';
+      subVideoBtnCheck();
+    }
+  });
+
+  function checkExist(obj, list, flag) {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i] && list[i][flag] && obj[flag] && list[i][flag] == obj[flag]) {
+        return i;
+      }
+    }
+    return false;
+  }
+</script>
+<script src="./js/yuvHelper/user.js"></script>
+<script src="./js/yuvHelper/audio.js"></script>
+<script src="./js/yuvHelper/video.js"></script>
+<script src="./js/yuvHelper/share.js"></script>

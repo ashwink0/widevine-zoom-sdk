@@ -1,0 +1,5 @@
+v5.7.1.643
+
+Base SDK versions:
+win32 native sdk version:zoom-sdk.5.7.1.643_x86
+mac native sdk version:All_mac_sdk_5.7.1.643_universal
