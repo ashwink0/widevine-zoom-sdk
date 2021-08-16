@@ -15,13 +15,13 @@
   "license": "ISC",
   "gypfile": true,
   "devDependencies": {
-    "electron": "^11.0.1",
+    "electron": "github:castlabs/electron-releases#v14.0.0-wvvmp",
     "electron-packager": "^15.2.0",
     "electron-rebuild": "^1.10.0"
   },
   "dependencies": {
-    "electron": "^11.0.1",
     "electron-packager": "^15.2.0",
-    "electron-rebuild": "^1.10.0"
+    "electron-rebuild": "^1.10.0",
+    "google-protobuf": "^3.17.3"
   }
 }

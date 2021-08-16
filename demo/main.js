@@ -8,17 +8,8 @@ try {
   app.exit();
   return
 }
-let isOffline = false
-let widevineDir = app.getPath('userData')
-
-
-app.commandLine.appendSwitch('widevine-cdm-path', '/path/to/widevine_library')
-// The version of plugin can be got from `chrome://components` page in Chrome.
-app.commandLine.appendSwitch('widevine-cdm-version', '1.4.8.866')
 
 const ZOOMSDKMOD = require('../lib/zoom_sdk.js');
-
-
 const os = require('os');
 const platform = os.platform();
 const arch = os.arch();
@@ -31,7 +22,7 @@ const initoptions = {
 initoptions.path = platform == 'darwin' ? './../sdk/mac/' : arch == 'x64' ? './../sdk/win64/' : './../sdk/win32/';
 
 if (platform == 'darwin' && nativeTheme) {
-  nativeTheme.themeSource = 'dark';
+  nativeTheme.themeSource = 'light';
 }
 
 const zoomsdk = ZOOMSDKMOD.ZoomSDK.getInstance(initoptions);
